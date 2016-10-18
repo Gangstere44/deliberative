@@ -3,6 +3,7 @@ package template;
 /* import table */
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Scanner;
 
 import logist.agent.Agent;
 import logist.behavior.DeliberativeBehavior;
@@ -106,6 +107,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
+
+		System.out.println("All tasks : ");
+		for(Task t : tasks) {
+			System.out.println(t.toString());
+		}
+
+
+		int capacity = vehicle.capacity();
 		City firstCity = vehicle.getCurrentCity();
 
 		// create an empty task set
@@ -118,10 +127,22 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		LinkedList<StateNode> toVisit = new LinkedList<StateNode>();
 		toVisit.add(currentState);
 
+		System.out.println("Compute BFS ...");
+
 		do {
 
+			Scanner sc = new Scanner(System.in);
+			String next = "";
+/*			do {
+			 next = sc.nextLine();
+			} while(next.equals("next"));
+	*/		System.out.println("*********************************************************");
+
 			System.out.println(toVisit.size());
+
 			currentState = toVisit.poll();
+
+		//	System.out.println("Current state : " + currentState.toString());
 
 			if (currentState == null) {
 				throw (new java.lang.IllegalArgumentException(
@@ -141,8 +162,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				StateNode nextState = new StateNode(n,
 						currentState.getCarriedTasks(),
 						currentState.getRemainingTasks(), a);
+			//	System.out.println("Next state : " + nextState);
+
 				if (!visited.contains(nextState)) {
 					toVisit.add(nextState);
+				//	System.out.println("Accepted !!!");
+				} else {
+					//System.out.println("Discarded ...");
+					sc.nextInt();
 				}
 			}
 
@@ -160,9 +187,15 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 						StateNode nextState = new StateNode(
 								currentState.getCurrentCity(), newTaskSet,
 								currentState.getRemainingTasks(), a);
+						//System.out.println("Next state : " + nextState);
+						/*
 						if (!visited.contains(nextState)) {
 							toVisit.add(nextState);
-						}
+							System.out.println("Accepted !!!");
+						} else {
+							System.out.println("Discarded ...");
+						}*/
+						toVisit.add(nextState);
 						break;
 					}
 				}
@@ -185,15 +218,25 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 						StateNode nextState = new StateNode(
 								currentState.getCurrentCity(),
 								newCarriedTaskSet, newRemainingTaskSet, a);
-						if (!visited.contains(nextState)) {
+						//System.out.println("Next state : " + nextState);
+						//System.out.println("pickup : " + !visited.contains(nextState)  + " and " + (capacity >= currentState.getWeight() + t.weight));
+						/*if (!visited.contains(nextState) && capacity >= currentState.getWeight() + t.weight) {
 							toVisit.add(nextState);
-						}
+							System.out.println("Accepted !!!");
+						} else {
+							System.out.println("Discarded ...");
+						}*/
+						toVisit.add(nextState);
 						break;
 					}
 				}
 			}
 
+
+
 		} while (true);
+
+		System.out.println("Compute plan ...");
 
 		StateNode finalState = currentState;
 		LinkedList<ActionEdge> stackOfActions = new LinkedList<ActionEdge>();

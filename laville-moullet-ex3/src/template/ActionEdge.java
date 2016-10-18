@@ -34,4 +34,19 @@ public class ActionEdge {
 	public Task getTask() {
 		return task;
 	}
+
+	@Override
+	public int hashCode() {
+		return (task == null ? 12 : task.hashCode()) + (lastState == null ? 6 : lastState.hashCode()) + (moveTo == null ? 2 : moveTo.hashCode()) + (pickup ? 1 : 0);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		ActionEdge other = (ActionEdge) o;
+		return other.getLastState().equals(lastState) && other.getMoveTo().equals(moveTo) && other.pickup == pickup && other.task.equals(task);
+	}
+
+	public String toString() {
+		return "";
+	}
 }
