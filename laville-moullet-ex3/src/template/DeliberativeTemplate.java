@@ -1,10 +1,13 @@
 package template;
 
 /* import table */
-import logist.simulation.Vehicle;
+import java.util.HashSet;
+import java.util.LinkedList;
+
 import logist.agent.Agent;
 import logist.behavior.DeliberativeBehavior;
 import logist.plan.Plan;
+import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.task.TaskSet;
@@ -17,35 +20,38 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class DeliberativeTemplate implements DeliberativeBehavior {
 
-	enum Algorithm { BFS, ASTAR }
-	
+	enum Algorithm {
+		BFS, ASTAR
+	}
+
 	/* Environment */
 	Topology topology;
 	TaskDistribution td;
-	
+
 	/* the properties of the agent */
 	Agent agent;
 	int capacity;
 
 	/* the planning class */
 	Algorithm algorithm;
-	
+
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
-		
+
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
-		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
-		
+		String algorithmName = agent.readProperty("algorithm", String.class,
+				"ASTAR");
+
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
-		
+
 		// ...
 	}
-	
+
 	@Override
 	public Plan plan(Vehicle vehicle, TaskSet tasks) {
 		Plan plan;
@@ -58,14 +64,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			break;
 		case BFS:
 			// ...
-			plan = naivePlan(vehicle, tasks);
+			plan = bfsPlan(vehicle, tasks);
 			break;
 		default:
 			throw new AssertionError("Should not happen.");
-		}		
+		}
 		return plan;
 	}
-	
+
 	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
@@ -91,11 +97,126 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 	@Override
 	public void planCancelled(TaskSet carriedTasks) {
-		
+
 		if (!carriedTasks.isEmpty()) {
 			// This cannot happen for this simple agent, but typically
 			// you will need to consider the carriedTasks when the next
 			// plan is computed.
 		}
 	}
+
+	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
+		City firstCity = vehicle.getCurrentCity();
+
+		StateNode currentState = new StateNode(firstCity, null, tasks, null);
+
+		HashSet<StateNode> visited = new HashSet<StateNode>();
+		LinkedList<StateNode> toVisit = new LinkedList<StateNode>();
+		toVisit.add(currentState);
+
+		do {
+
+			currentState = toVisit.poll();
+
+			if (currentState == null) {
+				throw (new java.lang.IllegalArgumentException(
+						"Unreachable city(ies)"));
+			}
+
+			if (currentState.isFinalState()) {
+				break;
+			}
+
+			visited.add(currentState);
+
+			// create the move action
+			for (City n : currentState.getCurrentCity().neighbors()) {
+
+				ActionEdge a = new ActionEdge(currentState, n, false, null);
+				StateNode nextState = new StateNode(n,
+						currentState.getCarriedTasks(),
+						currentState.getRemainingTasks(), a);
+				if (!visited.contains(nextState)) {
+					toVisit.add(nextState);
+				}
+			}
+
+			// create the delivery action
+			if (currentState.getCarriedTasks() != null) {
+				for (Task t : currentState.getCarriedTasks()) {
+
+					if (t.deliveryCity.equals(currentState.getCurrentCity())) {
+
+						ActionEdge a = new ActionEdge(currentState, null,
+								false, t);
+						TaskSet newTaskSet = TaskSet.copyOf(currentState
+								.getCarriedTasks());
+						newTaskSet.remove(t);
+						StateNode nextState = new StateNode(
+								currentState.getCurrentCity(), newTaskSet,
+								currentState.getRemainingTasks(), a);
+						if (!visited.contains(nextState)) {
+							toVisit.add(nextState);
+						}
+						break;
+					}
+				}
+			}
+
+			// create the pickup action
+			if (currentState.getRemainingTasks() != null) {
+				for (Task t : currentState.getRemainingTasks()) {
+					if (t.pickupCity.equals(currentState.getCurrentCity())) {
+
+						ActionEdge a = new ActionEdge(currentState, null, true,
+								t);
+						TaskSet newRemainingTaskSet = TaskSet
+								.copyOf(currentState.getRemainingTasks());
+						newRemainingTaskSet.remove(t);
+						TaskSet newCarriedTaskSet = TaskSet.copyOf(currentState
+								.getCarriedTasks());
+						newCarriedTaskSet.add(t);
+						StateNode nextState = new StateNode(
+								currentState.getCurrentCity(),
+								newCarriedTaskSet, newRemainingTaskSet, a);
+						if (!visited.contains(nextState)) {
+							toVisit.add(nextState);
+						}
+						break;
+					}
+				}
+			}
+
+		} while (true);
+
+		StateNode finalState = currentState;
+		LinkedList<ActionEdge> stackOfActions = new LinkedList<ActionEdge>();
+		do {
+
+			stackOfActions.add(currentState.getAction());
+			currentState = currentState.getAction().getLastState();
+
+		} while (currentState.getAction() != null);
+
+		Plan plan = new Plan(firstCity);
+		ActionEdge currentAction;
+		do {
+
+			currentAction = stackOfActions.pollLast();
+
+			if (currentAction.getMoveTo() != null) {
+				plan.appendMove(currentAction.getMoveTo());
+			} else {
+				if (currentAction.isPickup()) {
+					plan.appendPickup(currentAction.getTask());
+				} else {
+					plan.appendDelivery(currentAction.getTask());
+				}
+			}
+
+		} while (!stackOfActions.isEmpty());
+
+		return plan;
+	}
+
 }
