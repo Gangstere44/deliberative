@@ -6,20 +6,18 @@ import logist.topology.Topology.City;
 public class StateNode {
 
 	private City currentCity;
-	private TaskSet carriedTasks = null;
-	private TaskSet remainingTasks = null;
+	private TaskSet carriedTasks;
+	private TaskSet remainingTasks;
 
 	private ActionEdge action;
 
 	public StateNode(City curC, TaskSet carT, TaskSet remT, ActionEdge a) {
 
 		currentCity = curC;
-		if(carT != null) {
-			carriedTasks = TaskSet.copyOf(carT);
-		}
-		if(remT != null) {
-			remainingTasks =  TaskSet.copyOf(remT);
-		}
+		carriedTasks = TaskSet.copyOf(carT);
+
+		remainingTasks = TaskSet.copyOf(remT);
+
 		action = a;
 
 	}
@@ -41,12 +39,13 @@ public class StateNode {
 	}
 
 	public boolean isFinalState() {
-		return (carriedTasks == null || carriedTasks.isEmpty()) && (remainingTasks == null || remainingTasks.isEmpty());
+		return carriedTasks.isEmpty() && remainingTasks.isEmpty();
 	}
 
 	@Override
 	public int hashCode() {
-		return currentCity.hashCode() + (carriedTasks == null ? 0 : carriedTasks.hashCode()) + (remainingTasks == null ? 0 : remainingTasks.hashCode());
+		return currentCity.hashCode() + carriedTasks.hashCode()
+				+ remainingTasks.hashCode();
 	}
 
 	@Override

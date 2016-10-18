@@ -108,7 +108,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		City firstCity = vehicle.getCurrentCity();
 
-		StateNode currentState = new StateNode(firstCity, null, tasks, null);
+		// create an empty task set
+		TaskSet emptySet = TaskSet.copyOf(tasks);
+		emptySet.removeAll(tasks);
+
+		StateNode currentState = new StateNode(firstCity, emptySet, tasks, null);
 
 		HashSet<StateNode> visited = new HashSet<StateNode>();
 		LinkedList<StateNode> toVisit = new LinkedList<StateNode>();
@@ -116,6 +120,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 		do {
 
+			System.out.println(toVisit.size());
 			currentState = toVisit.poll();
 
 			if (currentState == null) {
@@ -167,7 +172,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			if (currentState.getRemainingTasks() != null) {
 				for (Task t : currentState.getRemainingTasks()) {
 					if (t.pickupCity.equals(currentState.getCurrentCity())) {
-
 						ActionEdge a = new ActionEdge(currentState, null, true,
 								t);
 						TaskSet newRemainingTaskSet = TaskSet
@@ -175,7 +179,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 						newRemainingTaskSet.remove(t);
 						TaskSet newCarriedTaskSet = TaskSet.copyOf(currentState
 								.getCarriedTasks());
+
 						newCarriedTaskSet.add(t);
+
 						StateNode nextState = new StateNode(
 								currentState.getCurrentCity(),
 								newCarriedTaskSet, newRemainingTaskSet, a);
