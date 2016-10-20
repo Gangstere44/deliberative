@@ -53,13 +53,21 @@ public class StateNode {
 
 	@Override
 	public int hashCode() {
-		return currentCity.hashCode() + carriedTasks.hashCode()
-				+ remainingTasks.hashCode() + (action == null ? 0 : action.hashCode());
+		return currentCity.hashCode() + carriedTasks.hashCode() * 11
+				+ remainingTasks.hashCode() * 41 + currentWeight * 13;
 	}
 
 	@Override
 	public boolean equals(Object o) {
-		return hashCode() == o.hashCode();
+		if(!(o instanceof StateNode)) {
+			return false;
+		}
+		StateNode s = (StateNode) o;
+		return s.currentCity == currentCity &&
+				s.currentWeight == currentWeight &&
+				s.carriedTasks.equals(carriedTasks) &&
+				s.remainingTasks.equals(remainingTasks);
+
 	}
 
 	public String toString() {

@@ -109,12 +109,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 
 		System.out.println("All tasks : ");
-		for(Task t : tasks) {
+		for (Task t : tasks) {
 			System.out.println(t.toString());
 		}
 
-
 		int capacity = vehicle.capacity();
+		System.out.println("Capa : " + capacity);
 		City firstCity = vehicle.getCurrentCity();
 
 		// create an empty task set
@@ -133,16 +133,30 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 			Scanner sc = new Scanner(System.in);
 			String next = "";
-/*			do {
-			 next = sc.nextLine();
-			} while(next.equals("next"));
-	*/		System.out.println("*********************************************************");
-
-			System.out.println(toVisit.size());
+			/*
+			 * ActionEdge e1 = new ActionEdge(currentState, firstCity, false,
+			 * tasks.iterator().next());
+			 *
+			 * ActionEdge e2 = new ActionEdge(currentState, firstCity, false,
+			 * tasks.iterator().next()); System.out.println(e1.equals(e2));
+			 * StateNode s1 = new StateNode(firstCity, emptySet, tasks, e1);
+			 * StateNode s2 = new StateNode(firstCity, emptySet, tasks, e2);
+			 * System.out.println("EQUALS ?" + s1.equals(s2)); ActionEdge e3 =
+			 * new ActionEdge(s1, firstCity, false, tasks.iterator().next());
+			 * ActionEdge e4 = new ActionEdge(s2, firstCity, false,
+			 * tasks.iterator().next()); System.out.println(e3.equals(e3));
+			 */
+			/*
+			 * do { next = sc.nextLine(); } while(next.equals("next"));
+			 * System.out
+			 * .println("*********************************************************"
+			 * );
+			 */
+			// System.out.println(toVisit.size());
 
 			currentState = toVisit.poll();
 
-		//	System.out.println("Current state : " + currentState.toString());
+			// System.out.println("Current state : " + currentState.toString());
 
 			if (currentState == null) {
 				throw (new java.lang.IllegalArgumentException(
@@ -162,77 +176,69 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				StateNode nextState = new StateNode(n,
 						currentState.getCarriedTasks(),
 						currentState.getRemainingTasks(), a);
-			//	System.out.println("Next state : " + nextState);
+				// System.out.println("Next state : " + nextState);
 
 				if (!visited.contains(nextState)) {
 					toVisit.add(nextState);
-				//	System.out.println("Accepted !!!");
+					// System.out.println("Accepted !!!");
 				} else {
-					//System.out.println("Discarded ...");
-					sc.nextInt();
+					// System.out.println("Discarded ...");
+					// sc.nextInt();
 				}
 			}
 
 			// create the delivery action
-			if (currentState.getCarriedTasks() != null) {
-				for (Task t : currentState.getCarriedTasks()) {
+			for (Task t : currentState.getCarriedTasks()) {
 
-					if (t.deliveryCity.equals(currentState.getCurrentCity())) {
+				if (t.deliveryCity.equals(currentState.getCurrentCity())) {
 
-						ActionEdge a = new ActionEdge(currentState, null,
-								false, t);
-						TaskSet newTaskSet = TaskSet.copyOf(currentState
-								.getCarriedTasks());
-						newTaskSet.remove(t);
-						StateNode nextState = new StateNode(
-								currentState.getCurrentCity(), newTaskSet,
-								currentState.getRemainingTasks(), a);
-						//System.out.println("Next state : " + nextState);
-						/*
-						if (!visited.contains(nextState)) {
-							toVisit.add(nextState);
-							System.out.println("Accepted !!!");
-						} else {
-							System.out.println("Discarded ...");
-						}*/
+					ActionEdge a = new ActionEdge(currentState, null, false, t);
+					TaskSet newTaskSet = TaskSet.copyOf(currentState
+							.getCarriedTasks());
+					newTaskSet.remove(t);
+					StateNode nextState = new StateNode(
+							currentState.getCurrentCity(), newTaskSet,
+							currentState.getRemainingTasks(), a);
+					// System.out.println("Next state : " + nextState);
+
+					if (!visited.contains(nextState)) {
 						toVisit.add(nextState);
-						break;
+						// System.out.println("Accepted !!!");
+					} else {
+						// System.out.println("Discarded ...");
 					}
+					break;
 				}
+
 			}
 
 			// create the pickup action
-			if (currentState.getRemainingTasks() != null) {
-				for (Task t : currentState.getRemainingTasks()) {
-					if (t.pickupCity.equals(currentState.getCurrentCity())) {
-						ActionEdge a = new ActionEdge(currentState, null, true,
-								t);
-						TaskSet newRemainingTaskSet = TaskSet
-								.copyOf(currentState.getRemainingTasks());
-						newRemainingTaskSet.remove(t);
-						TaskSet newCarriedTaskSet = TaskSet.copyOf(currentState
-								.getCarriedTasks());
+			for (Task t : currentState.getRemainingTasks()) {
+				if (t.pickupCity.equals(currentState.getCurrentCity())) {
+					ActionEdge a = new ActionEdge(currentState, null, true, t);
+					TaskSet newRemainingTaskSet = TaskSet.copyOf(currentState
+							.getRemainingTasks());
+					newRemainingTaskSet.remove(t);
+					TaskSet newCarriedTaskSet = TaskSet.copyOf(currentState
+							.getCarriedTasks());
 
-						newCarriedTaskSet.add(t);
+					newCarriedTaskSet.add(t);
 
-						StateNode nextState = new StateNode(
-								currentState.getCurrentCity(),
-								newCarriedTaskSet, newRemainingTaskSet, a);
-						//System.out.println("Next state : " + nextState);
-						//System.out.println("pickup : " + !visited.contains(nextState)  + " and " + (capacity >= currentState.getWeight() + t.weight));
-						/*if (!visited.contains(nextState) && capacity >= currentState.getWeight() + t.weight) {
-							toVisit.add(nextState);
-							System.out.println("Accepted !!!");
-						} else {
-							System.out.println("Discarded ...");
-						}*/
+					StateNode nextState = new StateNode(
+							currentState.getCurrentCity(), newCarriedTaskSet,
+							newRemainingTaskSet, a);
+					// System.out.println("Next state : " + nextState);
+					// System.out.println("pickup : " +
+					// !visited.contains(nextState) + " and " + (capacity >=
+					// currentState.getWeight() + t.weight));
+					if (!visited.contains(nextState)
+							&& capacity >= currentState.getWeight() + t.weight) {
 						toVisit.add(nextState);
-						break;
 					}
+
 				}
+
 			}
-
-
 
 		} while (true);
 

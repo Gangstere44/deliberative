@@ -37,13 +37,17 @@ public class ActionEdge {
 
 	@Override
 	public int hashCode() {
-		return (task == null ? 12 : task.hashCode()) + (lastState == null ? 6 : lastState.hashCode()) + (moveTo == null ? 2 : moveTo.hashCode()) + (pickup ? 1 : 0);
+		return (task == null ? 8 : task.hashCode()) + (lastState == null ? 4 : lastState.hashCode()) + (moveTo == null ? 2 : moveTo.hashCode()) + (pickup ? 1 : 0);
 	}
 
 	@Override
 	public boolean equals(Object o) {
 		ActionEdge other = (ActionEdge) o;
-		return other.getLastState().equals(lastState) && other.getMoveTo().equals(moveTo) && other.pickup == pickup && other.task.equals(task);
+		return ((other.lastState == null && lastState == null) ||
+				other.getLastState().equals(lastState)) &&
+				other.moveTo == moveTo &&
+				other.pickup == pickup &&
+				other.task == task;
 	}
 
 	public String toString() {
