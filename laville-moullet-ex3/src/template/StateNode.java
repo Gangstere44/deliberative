@@ -11,6 +11,9 @@ public class StateNode {
 	private TaskSet remainingTasks;
 	private int currentWeight = 0;
 
+	private double h = 0.0;
+	private double g = 0.0;
+
 	private ActionEdge action;
 
 	public StateNode(City curC, TaskSet carT, TaskSet remT, ActionEdge a) {
@@ -24,8 +27,8 @@ public class StateNode {
 		remainingTasks = TaskSet.copyOf(remT);
 
 		action = a;
-
 	}
+
 
 	public City getCurrentCity() {
 		return currentCity;
@@ -49,6 +52,26 @@ public class StateNode {
 
 	public boolean isFinalState() {
 		return carriedTasks.isEmpty() && remainingTasks.isEmpty();
+	}
+
+	public void setH(double h) {
+		this.h = h;
+	}
+
+	public double getH() {
+		return h;
+	}
+
+	public void setG(double g) {
+		this.g = g;
+	}
+
+	public double getG() {
+		return g;
+	}
+
+	public double getF() {
+		return h + g;
 	}
 
 	@Override
