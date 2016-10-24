@@ -57,9 +57,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 
-		 algorithm = Algorithm.ASTAR;
-		// ...
-
 		carriedTaskAfterCancellation = null;
 	}
 
@@ -70,11 +67,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		// Compute the plan with the selected algorithm.
 		switch (algorithm) {
 		case ASTAR:
-			// ...
 			plan = aStarPlan(vehicle, tasks);
 			break;
 		case BFS:
-			// ...
 			plan = bfsPlan(vehicle, tasks);
 			break;
 		default:
@@ -110,10 +105,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	public void planCancelled(TaskSet carriedTasks) {
 
 		if (!carriedTasks.isEmpty()) {
-			// This cannot happen for this simple agent, but typically
-			// you will need to consider the carriedTasks when the next
-			// plan is computed.
-
 			carriedTaskAfterCancellation = carriedTasks;
 		} else {
 			carriedTaskAfterCancellation = null;
@@ -188,12 +179,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 							currentState.getCurrentCity(), newTaskSet,
 							currentState.getRemainingTasks(), a);
 					nextState.setG(currentState.getG());
-					nextState.setH(heuristic(nextState, capacity));
+					nextState.setH(heuristic(nextState));
 
-					if (!f.containsKey(nextState)) {
-						f.put(nextState, nextState.getF());
-						c.add(nextState);
-					} else if (f.get(nextState) >= nextState.getF()) {
+					if (!f.containsKey(nextState)
+							|| f.get(nextState) <= nextState.getF()) {
 						f.put(nextState, nextState.getF());
 						c.add(nextState);
 					}
@@ -218,12 +207,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 						currentState.getRemainingTasks(), a);
 				nextState.setG(currentState.getG()
 						+ currentState.getCurrentCity().distanceTo(n));
-				nextState.setH(heuristic(nextState, capacity));
+				nextState.setH(heuristic(nextState));
 
-				if (!f.containsKey(nextState)) {
-					f.put(nextState, nextState.getF());
-					c.add(nextState);
-				} else if (f.get(nextState) <= nextState.getF()) {
+				if (!f.containsKey(nextState)
+						|| f.get(nextState) <= nextState.getF()) {
 					f.put(nextState, nextState.getF());
 					c.add(nextState);
 				}
@@ -231,8 +218,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 			// create the pickup action
 			for (Task t : currentState.getRemainingTasks()) {
+
 				if (t.pickupCity.equals(currentState.getCurrentCity())) {
 
+					// check overweight
 					if (t.weight <= capacity - currentState.getWeight()) {
 						ActionEdge a = new ActionEdge(currentState, null, true,
 								t);
@@ -245,13 +234,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 						StateNode nextState = new StateNode(
 								currentState.getCurrentCity(),
 								newCarriedTaskSet, newRemainingTaskSet, a);
-						nextState.setG(currentState.getG());
-						nextState.setH(heuristic(nextState, capacity));
 
-						if (!f.containsKey(nextState)) {
-							f.put(nextState, nextState.getF());
-							c.add(nextState);
-						} else if (f.get(nextState) <= nextState.getF()) {
+						nextState.setG(currentState.getG());
+						nextState.setH(heuristic(nextState));
+
+						if (!f.containsKey(nextState)
+								|| f.get(nextState) <= nextState.getF()) {
 							f.put(nextState, nextState.getF());
 							c.add(nextState);
 						}
@@ -264,58 +252,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		return constructPlan(currentState, firstCity);
 	}
 
-	private double heuristic(StateNode s, int maxWeight) {
-	//	return heuristic2(s, maxWeight);
-
-		// we want to deliver asap
-		if (s.getAction().getMoveTo() == null && !s.getAction().isPickup()) {
-			return 0.0;
-		}
-
-		// do we really want to take each time ?
-		if (s.getAction().getMoveTo() == null && s.getAction().isPickup()) {
-			return 0.0;
-		}
-
-		// we carry a task(s), go deliver the closest one
-		if (s.getWeight() > 0) {
-
-			double minDist = 0.0;
-			boolean first = true;
-			for (Task t : s.getCarriedTasks()) {
-				double tmpDist = s.getCurrentCity().distanceTo(t.deliveryCity);
-				if (first) {
-					first = false;
-					minDist = tmpDist;
-				} else if (minDist > tmpDist) {
-					minDist = tmpDist;
-				}
-			}
-
-			return minDist;
-
-			// we don't carry a task, go take the closest one
-		} else {
-
-			double minDist = 0.0;
-			boolean first = true;
-			for (Task t : s.getRemainingTasks()) {
-				double tmpDist = s.getCurrentCity().distanceTo(t.deliveryCity);
-				if (first) {
-					first = false;
-					minDist = tmpDist;
-				} else if (minDist > tmpDist) {
-					minDist = tmpDist;
-				}
-			}
-
-			return minDist;
-		}
-
-	}
-
-	private double heuristic2(StateNode s, int maxWeight) {
-
+	// heuristic using the minimum spanning tree
+	// Here minimum over the distance between cities
+	// with a pickup or delivery action(s)
+	private double heuristic(StateNode s) {
 
 		HashSet<City> neededCities = new HashSet<Topology.City>();
 
@@ -327,7 +267,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			neededCities.addAll(t.deliveryCity.pathTo(t.pickupCity));
 		}
 
-		if(neededCities.isEmpty())
+		// if no cities needed we will reach a final state
+		if (neededCities.isEmpty())
 			return 0.0;
 
 		PriorityQueue<EdgeCity> p = new PriorityQueue<EdgeCity>(
@@ -353,27 +294,26 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 		while (!neededCities.isEmpty()) {
 
-
 			neededCities.remove(cur);
 
 			for (City c : neededCities) {
-					EdgeCity newEdge = new EdgeCity(c, cur, c.distanceTo(cur));
-					if (!e.contains(newEdge)) {
-						e.add(newEdge);
-						p.add(newEdge);
+				EdgeCity newEdge = new EdgeCity(c, cur, c.distanceTo(cur));
+				if (!e.contains(newEdge)) {
+					e.add(newEdge);
+					p.add(newEdge);
 				}
 			}
-			if(!p.isEmpty()) {
-			EdgeCity curEdge = p.poll();
+			if (!p.isEmpty()) {
+				EdgeCity curEdge = p.poll();
 
-			result.add(curEdge);
+				result.add(curEdge);
 
-			cur = curEdge.from == cur ? curEdge.to : curEdge.from;
+				cur = curEdge.from == cur ? curEdge.to : curEdge.from;
 			}
 		}
 
 		double sum = 0.0;
-		for(EdgeCity c : result)
+		for (EdgeCity c : result)
 			sum += c.distance;
 
 		return sum;
@@ -397,9 +337,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		LinkedList<StateNode> toVisit = new LinkedList<StateNode>();
 		toVisit.add(currentState);
 
-		System.out.println("Deliberative with BFS");
 		do {
-
 			currentState = toVisit.poll();
 
 			if (currentState == null) {
@@ -452,7 +390,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 			// create the pickup action
 			for (Task t : currentState.getRemainingTasks()) {
-				if (t.pickupCity.equals(currentState.getCurrentCity())) {
+				if (t.pickupCity.equals(currentState.getCurrentCity())
+						&& capacity >= currentState.getWeight() + t.weight) {
 					ActionEdge a = new ActionEdge(currentState, null, true, t);
 					TaskSet newRemainingTaskSet = TaskSet.copyOf(currentState
 							.getRemainingTasks());
@@ -465,8 +404,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 							newRemainingTaskSet, a);
 					nextState.setG(currentState.getG());
 
-					if (!visited.contains(nextState)
-							&& capacity >= currentState.getWeight() + t.weight) {
+					if (!visited.contains(nextState)) {
 						toVisit.add(nextState);
 					}
 
@@ -480,11 +418,13 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 
 	private Plan constructPlan(StateNode s, City fc) {
-		System.out.println("Distance travelled : " + s.getG());
-		System.out.println("Compute plan ...");
 
 		StateNode finalState = s;
 		LinkedList<ActionEdge> stackOfActions = new LinkedList<ActionEdge>();
+
+		System.out.println("Distance traveled : " + s.getG());
+
+		// first loop, we stack the action in reverse order
 		do {
 
 			stackOfActions.add(s.getAction());
@@ -494,6 +434,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 		Plan plan = new Plan(fc);
 		ActionEdge currentAction;
+
+		// second loop we extract from the stack
+		// the action in the correct order
 		do {
 
 			currentAction = stackOfActions.pollLast();
