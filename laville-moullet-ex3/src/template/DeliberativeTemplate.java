@@ -265,8 +265,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 
 	private double heuristic(StateNode s, int maxWeight) {
-		return heuristic2(s, maxWeight);
-		/*
+	//	return heuristic2(s, maxWeight);
+
 		// we want to deliver asap
 		if (s.getAction().getMoveTo() == null && !s.getAction().isPickup()) {
 			return 0.0;
@@ -311,10 +311,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 			return minDist;
 		}
-*/
+
 	}
 
 	private double heuristic2(StateNode s, int maxWeight) {
+
 
 		HashSet<City> neededCities = new HashSet<Topology.City>();
 
@@ -325,6 +326,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		for (Task t : s.getRemainingTasks()) {
 			neededCities.addAll(t.deliveryCity.pathTo(t.pickupCity));
 		}
+
+		if(neededCities.isEmpty())
+			return 0.0;
 
 		PriorityQueue<EdgeCity> p = new PriorityQueue<EdgeCity>(
 				new Comparator<EdgeCity>() {
@@ -352,21 +356,20 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 			neededCities.remove(cur);
 
-			for (City c : cur.neighbors()) {
-				if (neededCities.contains(c)) {
+			for (City c : neededCities) {
 					EdgeCity newEdge = new EdgeCity(c, cur, c.distanceTo(cur));
 					if (!e.contains(newEdge)) {
 						e.add(newEdge);
 						p.add(newEdge);
-					}
 				}
 			}
-
+			if(!p.isEmpty()) {
 			EdgeCity curEdge = p.poll();
 
 			result.add(curEdge);
 
 			cur = curEdge.from == cur ? curEdge.to : curEdge.from;
+			}
 		}
 
 		double sum = 0.0;
