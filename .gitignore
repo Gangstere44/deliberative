@@ -1,3 +1,5 @@
 *.pdf
 *.txt
 *.tex
+*.class
+src/history.xml
