@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Scanner;
 
 import logist.agent.Agent;
 import logist.behavior.DeliberativeBehavior;
@@ -65,6 +66,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		Plan plan;
 
 		// Compute the plan with the selected algorithm.
+		long startTime = System.currentTimeMillis();
 		switch (algorithm) {
 		case ASTAR:
 			plan = aStarPlan(vehicle, tasks);
@@ -75,6 +77,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		default:
 			throw new AssertionError("Should not happen.");
 		}
+		long endTime = System.currentTimeMillis();
+		System.out.println("Time to compute: " + (endTime - startTime) / 1000.0 + " sec");
 		return plan;
 	}
 
@@ -256,17 +260,18 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	// Here minimum over the distance between cities
 	// with a pickup or delivery action(s)
 	private double heuristic(StateNode s) {
-
+		
 		HashSet<City> neededCities = new HashSet<Topology.City>();
-
+		
 		for (Task t : s.getCarriedTasks()) {
-			neededCities.addAll(t.deliveryCity.pathTo(s.getCurrentCity()));
+			neededCities.add(t.deliveryCity);
 		}
-
+		
 		for (Task t : s.getRemainingTasks()) {
-			neededCities.addAll(t.deliveryCity.pathTo(t.pickupCity));
+			neededCities.add(t.deliveryCity);
+			neededCities.add(t.pickupCity);
 		}
-
+		neededCities.add(s.getCurrentCity());
 		// if no cities needed we will reach a final state
 		if (neededCities.isEmpty())
 			return 0.0;
@@ -288,13 +293,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 
 		HashSet<EdgeCity> e = new HashSet<EdgeCity>();
 
-		City cur = neededCities.iterator().next();
+		City cur = s.getCurrentCity();
+		neededCities.remove(cur);
 
 		HashSet<EdgeCity> result = new HashSet<EdgeCity>();
 
 		while (!neededCities.isEmpty()) {
-
-			neededCities.remove(cur);
 
 			for (City c : neededCities) {
 				EdgeCity newEdge = new EdgeCity(c, cur, c.distanceTo(cur));
@@ -304,11 +308,29 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 				}
 			}
 			if (!p.isEmpty()) {
-				EdgeCity curEdge = p.poll();
-
+				boolean done = false;
+				EdgeCity curEdge = null;
+				City newCur = cur;
+				do {
+					curEdge = p.poll();
+					if (neededCities.contains(curEdge.from)) {
+						newCur = curEdge.from;
+						done = true;
+					}
+					else if (neededCities.contains(curEdge.to)) {
+						newCur = curEdge.to;
+						done = true;
+					}
+				} while(!done && !p.isEmpty());
+				
+				cur = newCur;
+				
+				if (curEdge == null) {
+					System.out.println("mmmh");
+				}
+				
 				result.add(curEdge);
-
-				cur = curEdge.from == cur ? curEdge.to : curEdge.from;
+				neededCities.remove(cur);
 			}
 		}
 
@@ -317,6 +339,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			sum += c.distance;
 
 		return sum;
+		
 	}
 
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
@@ -422,7 +445,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		StateNode finalState = s;
 		LinkedList<ActionEdge> stackOfActions = new LinkedList<ActionEdge>();
 
-		System.out.println("Distance traveled : " + s.getG());
+		System.out.println("Distance traveled: " + s.getG());
 
 		// first loop, we stack the action in reverse order
 		do {

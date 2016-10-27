@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<history configuration="config\deliberative.xml">
+<history configuration="config/deliberative.xml">
 	<agents>
-		<agent name="deliberative1">
+		<agent name="deliberative-main">
 			<vehicle name="Vehicle 1"/>
 		</agent>
 	</agents>
 	<rounds>
 		<round id="1">
 			<tasks>
-				<task id="0" pickup="Aarau" delivery="Lausanne" weight="3" reward="55146"/>
-				<task id="1" pickup="Thun" delivery="St-Gallen" weight="3" reward="40875"/>
-				<task id="2" pickup="Bern" delivery="Aarau" weight="3" reward="85727"/>
-				<task id="3" pickup="Aarau" delivery="Neuchâtel" weight="3" reward="73495"/>
-				<task id="4" pickup="Neuchâtel" delivery="Genève" weight="3" reward="69417"/>
-				<task id="5" pickup="St-Gallen" delivery="Bern" weight="3" reward="49030"/>
+				<task id="0" pickup="Aarau" delivery="GenÃ¨ve" weight="3" reward="36797"/>
+				<task id="1" pickup="ZÃ¼rich" delivery="Sion" weight="3" reward="40875"/>
+				<task id="2" pickup="Sion" delivery="GenÃ¨ve" weight="3" reward="59223"/>
+				<task id="3" pickup="Basel" delivery="St-Gallen" weight="3" reward="59223"/>
+				<task id="4" pickup="Lausanne" delivery="St-Gallen" weight="3" reward="18448"/>
+				<task id="5" pickup="Sion" delivery="Basel" weight="3" reward="46991"/>
 			</tasks>
 			<events>
-				<event id="0" time="0" vehicle="Vehicle 1" move="Sion"/>
-				<event id="1" time="1666666579" vehicle="Vehicle 1" move="Thun"/>
-				<event id="2" time="2999999846" vehicle="Vehicle 1" pickup="1"/>
+				<event id="0" time="0" vehicle="Vehicle 1" pickup="4"/>
+				<event id="1" time="299999994" vehicle="Vehicle 1" move="Sion"/>
+				<event id="2" time="1966666602" vehicle="Vehicle 1" pickup="2"/>
+				<event id="3" time="2266666590" vehicle="Vehicle 1" pickup="5"/>
+				<event id="4" time="2566666579" vehicle="Vehicle 1" move="Thun"/>
 			</events>
 		</round>
 	</rounds>
 	<statistics>
-		<stat rank="1" agent="deliberative1">
+		<stat rank="1" agent="deliberative-main">
 			<total-tasks value="6"/>
 			<total-distance value="270.0"/>
 			<total-cost value="1350"/>
